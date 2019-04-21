@@ -33,9 +33,9 @@ public class MainActivity extends BaseActivity {
     private TextView name_result;
     private String result;
     private List<String> list;
-    private String str;
     private static final String TAG = "MainActivity";
     String s1,s2;
+    String h1,h2;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,9 +48,16 @@ public class MainActivity extends BaseActivity {
         summitTest.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                h1=name1.getText().toString();
+                h2=name2.getText().toString();
+                //数据上传服务器
+                addAccount add=new addAccount();
+                add.putNames(h1,h2);
+
+
                 //取输入的第一个字符
-               s1= name1.getText().toString().substring(0,1);
-               s2=name2.getText().toString().substring(0,1);
+               s1=h1 .substring(0,1);
+               s2=h2.substring(0,1);
                 Log.d(TAG, "s1="+s1);
 
                    //读取资源文件

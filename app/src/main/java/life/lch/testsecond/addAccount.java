@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.Gravity;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.sql.Connection;
@@ -18,9 +19,11 @@ import java.sql.Statement;
 public class addAccount {
     static Connection connection;
     static Statement sql;
+    String resultObject;
     Context mContext;
     Activity activity;
     ResultSet resultSet;
+    private TextView textView;
     int a;
     private static final String TAG = "addAccount";
     //得到连接
@@ -44,6 +47,105 @@ public class addAccount {
 
         return connection;
     }
+    //查询数据
+    public void chaNames(final String name, final String where, final TextView textView){
+this.textView=textView;
+        //可以写一个names对象，这里为了方便直接构造字符串
+        final StringBuffer stringBuffer=new StringBuffer("");
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                connection=getConnection();
+                try {
+                    sql=connection.createStatement();
+                    resultSet=sql.executeQuery("select*from names where "+where+" ="+"'"+name+"'");
+                   if (resultSet.first()){
+                       //使用do{} while();，否则first()方法会自动跳过第一个数据
+                       do {
+                           String name1 = resultSet.getString("names_one");
+                           String name2 = resultSet.getString("names_two");
+                           String date = resultSet.getString("sub_date");
+                           String total = name1 + "&" + name2 + "--" + date + "\n";
+                           stringBuffer.append(total);
+                       }while(resultSet.next());
+                       //所有结果
+                       resultObject=stringBuffer.toString();
+                   }else{
+                       //数据库无数据
+                       resultObject="没有查询到数据";
+                   }
+
+                  Message message=new Message();
+                  message.what=7;
+                  mHandler.sendMessage(message);
+
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }finally {
+                    if(connection!=null){
+                        try {
+                            connection.close();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if(sql!=null){
+                        try {
+                            sql.close();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
+            }
+        }).start();
+
+    }
+
+    //上传数据
+    public void putNames(final String h1,final String h2){
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                connection=getConnection();
+                try {
+                    sql=connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
+                    a=sql.executeUpdate("INSERT INTO names (names_one,names_two,sub_date)\r\n" +
+                                "VALUES ('"+h1+"','"+h2+"',NOW());");
+                    if (a==1){
+                        Log.d(TAG, "添加成功");
+                    }else{
+                        Log.d(TAG, "添加失败");
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }finally {
+                    if(connection!=null){
+                        try {
+                            connection.close();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if(sql!=null){
+                        try {
+                            sql.close();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
+            }
+        }).start();
+
+    }
+    //注册账户
     public void putAccount(final Activity activity,final Context context,
                            final String user_account,
                            final String user_password,final CallbackProgressBar callbackProgressBar
@@ -176,6 +278,9 @@ public class addAccount {
                     mContext.startActivity(login);
                     activity.finish();
                      break;
+                case 7:
+                    textView.setText(resultObject);
+                    break;
                 default:
                     break;
 
